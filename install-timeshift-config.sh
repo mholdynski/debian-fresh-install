@@ -101,7 +101,7 @@ else
     DESC="System backup – $NOW"
 fi
 sudo cp /etc/timeshift/timeshift-system.json /etc/timeshift/timeshift.json
-sudo timeshift --create --comments "$DESC"
+sudo timeshift --create --comments "$DESC" --tags manual
 EOF
 sudo mv /tmp/backup-system.sh /usr/local/bin/backup-system.sh
 sudo chmod +x /usr/local/bin/backup-system.sh
@@ -119,7 +119,7 @@ else
     DESC="Home backup – $NOW"
 fi
 sudo cp /etc/timeshift/timeshift-home.json /etc/timeshift/timeshift.json
-sudo timeshift --create --comments "$DESC"
+sudo timeshift --create --comments "$DESC" --tags manual
 sudo cp /etc/timeshift/timeshift-system.json /etc/timeshift/timeshift.json
 EOF
 sudo mv /tmp/backup-home.sh /usr/local/bin/backup-home.sh
