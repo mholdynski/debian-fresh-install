@@ -1,29 +1,31 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "🔍 Wykrywanie partycji BTRFS z systemem..."
+echo "Wykrywanie partycji BTRFS z systemem..."
 BTRFS_DEV=$(findmnt -no SOURCE /)
 UUID=$(blkid -s UUID -o value "$BTRFS_DEV")
 
 if [ -z "$UUID" ]; then
-    echo "❌ Nie znaleziono UUID dla $BTRFS_DEV"
+    echo "Nie znaleziono UUID dla $BTRFS_DEV"
     exit 1
 fi
 
-echo "✅ Wykryty dysk: $BTRFS_DEV"
-echo "✅ UUID: $UUID"
+echo "Wykryty dysk: $BTRFS_DEV"
+echo "UUID: $UUID"
+
+SNAP_PATH="/.snapshots"
 
 # =============================
-# 1. Config: system bez /home (z harmonogramem)
+# 1. Config: system bez /home /.snapshots /var/log /var/cache (z harmonogramem)
 # =============================
 cat >/tmp/timeshift-system.json <<EOF
 {
-    "backup_device_uuid": "$UUID",
-    "parent_device_uuid": "",
+    "backup_device_uuid": "",
+    "parent_device_uuid": "$UUID",
+    "snapshot_path": "$SNAP_PATH",
     "do_first_run": "false",
     "btrfs_mode": "true",
     "include_btrfs_home": "false",
-    "snapshot_type": "ONDEMAND",
     "schedule_monthly": "false",
     "schedule_weekly": "true",
     "schedule_daily": "false",
@@ -34,28 +36,33 @@ cat >/tmp/timeshift-system.json <<EOF
     "count_daily": "5",
     "count_hourly": "6",
     "count_boot": "5",
-    "count_on_demand": "5",
     "exclude": [
-        "/home"
+        "/home",
+        "/.snapshots",
+        "/var/log",
+        "/var/cache"
     ],
     "exclude-btrfs": [
-        "@home"
+        "@home",
+        "@snapshots",
+        "@log",
+        "@cache"
     ]
 }
 EOF
-sudo mv /tmp/timeshift-system.json /etc/timeshift-system.json
+sudo mv /tmp/timeshift-system.json /etc/timeshift/timeshift-system.json
 
 # =============================
 # 2. Config: tylko home (bez harmonogramu)
 # =============================
 cat >/tmp/timeshift-home.json <<EOF
 {
-    "backup_device_uuid": "$UUID",
-    "parent_device_uuid": "",
+    "backup_device_uuid": "",
+    "parent_device_uuid": "$UUID",
+    "snapshot_path": "$SNAP_PATH",
     "do_first_run": "false",
     "btrfs_mode": "true",
     "include_btrfs_home": "true",
-    "snapshot_type": "ONDEMAND",
     "schedule_monthly": "false",
     "schedule_weekly": "false",
     "schedule_daily": "false",
@@ -66,28 +73,35 @@ cat >/tmp/timeshift-home.json <<EOF
     "count_daily": "5",
     "count_hourly": "6",
     "count_boot": "5",
-    "count_on_demand": "5",
     "exclude": [
         "/",
         "/*",
         "!/home"
     ],
     "exclude-btrfs": [
-        "@"
+        "@",
+        "@log",
+        "@cache",
+        "@snapshots"
     ]
 }
 EOF
-sudo mv /tmp/timeshift-home.json /etc/timeshift-home.json
+sudo mv /tmp/timeshift-home.json /etc/timeshift/timeshift-home.json
 
 # =============================
 # 3. Skrypt backup-system.sh
 # =============================
 cat >/tmp/backup-system.sh <<'EOF'
 #!/bin/bash
-DESC="$1"
-sudo cp /etc/timeshift-system.json /etc/timeshift.json
-sudo timeshift --create --comments "${DESC:-System backup (bez /home)}"
-sudo cp /etc/timeshift-system.json /etc/timeshift.json
+NOW=$(date +"%Y-%m-%d_%H-%M")
+USER_DESC="${1:-}"
+if [ -n "$USER_DESC" ]; then
+    DESC="System backup – $USER_DESC"
+else
+    DESC="System backup – $NOW"
+fi
+sudo cp /etc/timeshift/timeshift-system.json /etc/timeshift/timeshift.json
+sudo timeshift --create --comments "$DESC"
 EOF
 sudo mv /tmp/backup-system.sh /usr/local/bin/backup-system.sh
 sudo chmod +x /usr/local/bin/backup-system.sh
@@ -97,10 +111,16 @@ sudo chmod +x /usr/local/bin/backup-system.sh
 # =============================
 cat >/tmp/backup-home.sh <<'EOF'
 #!/bin/bash
-DESC="$1"
-sudo cp /etc/timeshift-home.json /etc/timeshift.json
-sudo timeshift --create --comments "${DESC:-Home backup}"
-sudo cp /etc/timeshift-system.json /etc/timeshift.json
+NOW=$(date +"%Y-%m-%d_%H-%M")
+USER_DESC="${1:-}"
+if [ -n "$USER_DESC" ]; then
+    DESC="Home backup – $USER_DESC"
+else
+    DESC="Home backup – $NOW"
+fi
+sudo cp /etc/timeshift/timeshift-home.json /etc/timeshift/timeshift.json
+sudo timeshift --create --comments "$DESC"
+sudo cp /etc/timeshift/timeshift-system.json /etc/timeshift/timeshift.json
 EOF
 sudo mv /tmp/backup-home.sh /usr/local/bin/backup-home.sh
 sudo chmod +x /usr/local/bin/backup-home.sh
@@ -108,17 +128,13 @@ sudo chmod +x /usr/local/bin/backup-home.sh
 # =============================
 # 5. Alias do .bashrc
 # =============================
-if ! grep -q "alias bsys=" ~/.bashrc; then
-    echo "alias bsys='backup-system.sh'" >> ~/.bashrc
-fi
-if ! grep -q "alias bhome=" ~/.bashrc; then
-    echo "alias bhome='backup-home.sh'" >> ~/.bashrc
-fi
+grep -qxF "alias bsys='backup-system.sh'" ~/.bashrc || echo "alias bsys='backup-system.sh'" >> ~/.bashrc
+grep -qxF "alias bhome='backup-home.sh'" ~/.bashrc || echo "alias bhome='backup-home.sh'" >> ~/.bashrc
 
-echo "✅ Instalacja zakończona!"
-echo "ℹ️ Załaduj aliasy: source ~/.bashrc"
-echo "📦 Użycie:"
+echo "Instalacja zakończona!"
+echo "Załaduj aliasy: source ~/.bashrc"
+echo "Użycie:"
 echo "    bsys 'opis backupu systemu'"
 echo "    bhome 'opis backupu home'"
 echo ""
-echo "📅 Harmonogram: Timeshift co tydzień zrobi snapshot systemu (bez /home) i utrzyma max 7 tygodniowych."
+echo "Harmonogram: Timeshift co tydzień zrobi snapshot systemu (bez /home) i utrzyma max 7 tygodniowych."
