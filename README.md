@@ -5,14 +5,14 @@ chmod +x install-timeshift-config.sh
 source ~/.bashrc
 
 
-/etc/snapper/configs/system
+# config /etc/snapper/configs/system
 SUBVOLUME="/"  
 FSTYPE="btrfs"  
 
-# snapshoty będą widoczne w /.snapshots/system  
+#### snapshoty będą widoczne w /.snapshots/system  
 SNAPSHOT_DIRECTORY="/.snapshots/system"  
 
-# Harmonogram cotygodniowy (snapper-cleanup.timer + snapper-timeline.timer)  
+#### Harmonogram cotygodniowy (snapper-cleanup.timer + snapper-timeline.timer)  
 TIMELINE_CREATE="yes"  
 TIMELINE_CLEANUP="yes"  
 TIMELINE_MIN_AGE="1800"  
@@ -22,20 +22,20 @@ TIMELINE_LIMIT_WEEKLY="7"
 TIMELINE_LIMIT_MONTHLY="2"  
 TIMELINE_LIMIT_YEARLY="0"  
 
-# Ręczne snapshoty – bez automatycznego czyszczenia  
+#### Ręczne snapshoty – bez automatycznego czyszczenia  
 NUMBER_CLEANUP="no"
 
 
-/etc/snapper/configs/home  
+# config /etc/snapper/configs/home  
 SUBVOLUME="/home"  
 FSTYPE="btrfs"  
 
-# snapshoty będą widoczne w /.snapshots/home  
+#### snapshoty będą widoczne w /.snapshots/home  
 SNAPSHOT_DIRECTORY="/.snapshots/home"  
 
-# Harmonogram wyłączony – tylko ręczne snapshoty  
+#### Harmonogram wyłączony – tylko ręczne snapshoty  
 TIMELINE_CREATE="no"  
 TIMELINE_CLEANUP="no"  
 
-# Żadnego auto-cleanup  
+#### Żadnego auto-cleanup  
 NUMBER_CLEANUP="no"
