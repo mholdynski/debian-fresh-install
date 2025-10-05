@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "Wykrywanie partycji BTRFS z systemem..."
-BTRFS_DEV=$(findmnt -no SOURCE /)
+BTRFS_DEV=$(findmnt -no SOURCE /  | sed "s/\[.*//")
 UUID=$(blkid -s UUID -o value "$BTRFS_DEV")
 
 if [ -z "$UUID" ]; then
@@ -20,8 +20,8 @@ SNAP_PATH="/.snapshots"
 # =============================
 cat >/tmp/timeshift-system.json <<EOF
 {
-    "backup_device_uuid": "",
-    "parent_device_uuid": "$UUID",
+    "backup_device_uuid": "$UUID",
+    "parent_device_uuid": "",
     "snapshot_path": "$SNAP_PATH",
     "do_first_run": "false",
     "btrfs_mode": "true",
@@ -57,8 +57,8 @@ sudo mv /tmp/timeshift-system.json /etc/timeshift/timeshift-system.json
 # =============================
 cat >/tmp/timeshift-home.json <<EOF
 {
-    "backup_device_uuid": "",
-    "parent_device_uuid": "$UUID",
+    "backup_device_uuid": "$UUID",
+    "parent_device_uuid": "",
     "snapshot_path": "$SNAP_PATH",
     "do_first_run": "false",
     "btrfs_mode": "true",
@@ -101,7 +101,7 @@ else
     DESC="System backup – $NOW"
 fi
 sudo cp /etc/timeshift/timeshift-system.json /etc/timeshift/timeshift.json
-sudo timeshift --create --comments "$DESC" --tags manual
+sudo timeshift --create --comments "$DESC"
 EOF
 sudo mv /tmp/backup-system.sh /usr/local/bin/backup-system.sh
 sudo chmod +x /usr/local/bin/backup-system.sh
@@ -119,7 +119,7 @@ else
     DESC="Home backup – $NOW"
 fi
 sudo cp /etc/timeshift/timeshift-home.json /etc/timeshift/timeshift.json
-sudo timeshift --create --comments "$DESC" --tags manual
+sudo timeshift --create --comments "$DESC"
 sudo cp /etc/timeshift/timeshift-system.json /etc/timeshift/timeshift.json
 EOF
 sudo mv /tmp/backup-home.sh /usr/local/bin/backup-home.sh
