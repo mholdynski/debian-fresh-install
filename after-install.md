@@ -2,7 +2,7 @@
 
 ###Installing esentials:
 sudo apt install brightnessctl  
-sudo apt install xorg xorg-dev  
+sudo apt install xorg xorg-dev xorg-server xorg-init
 sudo apt install build-essential  
 
 ###Installing brave browser:
