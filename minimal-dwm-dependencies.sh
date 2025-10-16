@@ -4,4 +4,5 @@ sudo apt update
 sudo apt install -y xserver-xorg-core xserver-xorg-video-amdgpu xinit xinput x11-server-utils
 sudo apt install -y build-essential make
 sudo apt install -y libx11-dev libxinerama-dev libxft-dev
+sudo apt install -y brightnessctl
 curl -fsS https://dl.brave.com/install.sh | sh
