@@ -1,11 +1,5 @@
 ## What to do after install:
 
-### Installing esentials:  
-sudo apt install brightnessctl  
-sudo apt install xorg xorg-init xinit  
-sudo apt install build-essential 
+[] Jet Brains Mono Fonts download
+https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip
 
-sudo apt install xorg-dev xorg-server  
-
-### Installing brave browser:
-curl -fsS https://dl.brave.com/install.sh | sh
