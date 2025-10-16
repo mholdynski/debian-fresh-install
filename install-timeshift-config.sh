@@ -72,7 +72,7 @@ sudo chmod +x /usr/local/bin/backup-system.sh
 # =============================
 # Alias do .bashrc
 # =============================
-grep -qxF "alias bsys='backup-system.sh'" ~/.bashrc || echo "alias backup-sys='backup-system.sh'" >> ~/.bashrc
+grep -qxF "alias backup-sys='backup-system.sh'" ~/.bashrc || echo "alias backup-sys='backup-system.sh'" >> ~/.bashrc
 
 echo "Instalacja zakończona!"
 echo "Załaduj alias: source ~/.bashrc"
